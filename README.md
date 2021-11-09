@@ -26,5 +26,5 @@ Then:
 ```bash
 docker build -t mzn-dispatcher .
 kubectl apply -f mzn-dispatcher.yaml
-kubectl
+kubectl port-forward service/mzn-dispatcher-service 8080:8080
 ```
