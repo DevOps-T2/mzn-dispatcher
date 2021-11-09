@@ -3,14 +3,14 @@ from __future__ import annotations  # https://stackoverflow.com/questions/411350
 import logging
 from typing import List, Dict, Any
 from os import environ
+from uuid import uuid4
 
 from kubernetes import client, config
 from kubernetes.client.api import BatchV1Api
 
 
 config.load_incluster_config()
-hostname = environ["HOSTNAME"]
-logging.info(hostname)
+job_prefix = environ["JOB_PREFIX"]
 
 batch_api = client.BatchV1Api()
 
@@ -30,7 +30,8 @@ class Job(object):
         self._job = job
 
     @staticmethod
-    def from_defaults(name: str, image: str, command: List[str] = None) -> Job:
+    def from_defaults(image: str, command: List[str] = None) -> Job:
+        name = job_prefix + "-" + str(uuid4())
         # Configureate Pod template container
         container = client.V1Container(
             name=name,
@@ -48,13 +49,13 @@ class Job(object):
         job = client.V1Job(
             api_version="batch/v1",
             kind="Job",
-            metadata=client.V1ObjectMeta(name=name, labels={"dispatcher": hostname}),
+            metadata=client.V1ObjectMeta(name=name, labels={"app": job_prefix}),
             spec=spec)
         return Job(name, job)
 
     @staticmethod
     def get_jobs() -> List[Job]:
-        v1jobs = batch_api.list_namespaced_job(namespace="default", label_selector="dispatcher={}".format(hostname))
+        v1jobs = batch_api.list_namespaced_job(namespace="default", label_selector="app={}".format(job_prefix))
         return [Job(j.metadata.name, j) for j in v1jobs.items]
 
     def run_job(self) -> Dict[Any, Any]:

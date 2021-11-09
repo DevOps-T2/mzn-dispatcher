@@ -32,6 +32,9 @@ spec:
       containers:
       - image: mzn-dispatcher
         name: mzn-dispatcher
+        env:
+        - name: JOB_PREFIX
+          value: mzn-job
 
 ---
 kind: ClusterRole

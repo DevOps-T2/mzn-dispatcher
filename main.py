@@ -1,6 +1,5 @@
 from typing import List, Dict, Any
 import logging
-from uuid import uuid4
 
 from fastapi import FastAPI
 
@@ -20,10 +19,9 @@ def read_root() -> Dict[str, Any]:
 
 @app.get("/start")
 def schedule_job() -> Dict[str, Any]:
-    name = "mzn-" + str(uuid4())
-    job = Job.from_defaults(name, "minizinc/mznc2020", ["minizinc", "test.mzn", "2.dzn"])
+    job = Job.from_defaults("minizinc/mznc2020", ["minizinc", "test.mzn", "2.dzn"])
     status = job.run_job()
-    return {"name": name, "status": status}
+    return {"name": job.name, "status": status}
 
 
 @app.get("/status/{name}")
