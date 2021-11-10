@@ -21,13 +21,14 @@ class Job(object):
     A wrapper around the API-servers' job object
     """
 
-    name: str
-
     _job: client.V1Job
 
-    def __init__(self, name: str, job: client.V1Job) -> None:
-        self.name = name
+    def __init__(self, job: client.V1Job) -> None:
         self._job = job
+
+    @property
+    def name(self) -> str:
+        return self._job.metadata.name
 
     @staticmethod
     def from_defaults(image: str, command: List[str] = None) -> Job:
@@ -51,12 +52,12 @@ class Job(object):
             kind="Job",
             metadata=client.V1ObjectMeta(name=name, labels={"app": job_prefix}),
             spec=spec)
-        return Job(name, job)
+        return Job(job)
 
     @staticmethod
     def get_jobs() -> List[Job]:
         v1jobs = batch_api.list_namespaced_job(namespace="default", label_selector="app={}".format(job_prefix))
-        return [Job(j.metadata.name, j) for j in v1jobs.items]
+        return [Job(j) for j in v1jobs.items]
 
     def run_job(self) -> Dict[Any, Any]:
         api_response = batch_api.create_namespaced_job(
