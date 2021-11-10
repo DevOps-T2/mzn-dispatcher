@@ -3,7 +3,7 @@ import logging
 
 from fastapi import FastAPI
 
-from k8_api import Job
+from job import Job
 
 
 logging.basicConfig(level=logging.INFO)
