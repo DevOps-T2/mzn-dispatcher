@@ -8,6 +8,8 @@ from uuid import uuid4
 from kubernetes import client, config
 from kubernetes.client.api import BatchV1Api
 
+from models import SolverStatus
+
 
 config.load_incluster_config()
 job_prefix = environ["JOB_PREFIX"]
@@ -30,9 +32,15 @@ class Job(object):
     def name(self) -> str:
         return self._job.metadata.name
 
+    @property
+    def image(self) -> str:
+        return self._job.spec.template.spec.containers[0].image
+
     @staticmethod
-    def from_defaults(image: str, command: List[str] = None) -> Job:
+    def from_defaults(image: str, labels: Dict[str, str] = {}) -> Job:
+        labels["app"] = job_prefix
         name = job_prefix + "-" + str(uuid4())
+        command = ["minizinc", "test.mzn", "2.dzn"]
         # Configureate Pod template container
         container = client.V1Container(
             name=name,
@@ -50,28 +58,39 @@ class Job(object):
         job = client.V1Job(
             api_version="batch/v1",
             kind="Job",
-            metadata=client.V1ObjectMeta(name=name, labels={"app": job_prefix}),
+            metadata=client.V1ObjectMeta(name=name, labels=labels),
             spec=spec)
         return Job(job)
 
     @staticmethod
-    def get_jobs() -> List[Job]:
-        v1jobs = batch_api.list_namespaced_job(namespace="default", label_selector="app={}".format(job_prefix))
+    def get_jobs(labels: Dict[str, str] = {}) -> List[Job]:
+        labels["app"] = job_prefix
+        label_selector = Job.labels_to_string(labels)
+
+        v1jobs = batch_api.list_namespaced_job(namespace="default", label_selector=label_selector)
         return [Job(j) for j in v1jobs.items]
 
-    def run_job(self) -> Dict[Any, Any]:
+    def run_job(self) -> SolverStatus:
         api_response = batch_api.create_namespaced_job(
             body=self._job,
             namespace="default")
         logging.info("Job created. status='%s'" % str(api_response.status))
-        return self.get_job_status()
+        return self.get_status()
 
-    def get_job_status(self) -> Dict[Any, Any]:
+    def get_status(self) -> SolverStatus:
         api_response = batch_api.read_namespaced_job_status(
             name=self.name,
             namespace="default")
+        logging.debug(api_response.status.to_dict())
 
-        return api_response.status.to_dict()
+        stat_dir: Dict[str, int] = {}
+        for att in ["active", "failed", "succeeded"]:
+            stat_dir[att] = api_response.status.to_dict().get(att, 0) or 0
+
+        return SolverStatus(**stat_dir)
+
+    def get_output(self) -> str:
+        return "placeholder"
 
     def delete_job(self) -> str:
         api_response = batch_api.delete_namespaced_job(
@@ -81,3 +100,8 @@ class Job(object):
                 propagation_policy='Foreground',
                 grace_period_seconds=5))
         return api_response.status
+
+    @staticmethod
+    def labels_to_string(labels: Dict[str, str]) -> str:
+        return ",".join([label+"="+value for label, value in labels.items()])
+
