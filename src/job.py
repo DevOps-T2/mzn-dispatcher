@@ -8,7 +8,7 @@ from uuid import uuid4
 from kubernetes import client, config
 from kubernetes.client.api import BatchV1Api
 
-from models import SolverStatus
+from .models import SolverStatus
 
 
 config.load_incluster_config()

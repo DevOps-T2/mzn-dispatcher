@@ -4,8 +4,8 @@ from uuid import uuid4
 
 from fastapi import FastAPI
 
-from job import Job
-from models import ComputationRequest, ComputationStatus, ComputationResult, Solver, SolverStatus
+from .job import Job
+from .models import ComputationRequest, ComputationStatus, ComputationResult, Solver, SolverStatus
 
 
 logging.basicConfig(level=logging.INFO)
