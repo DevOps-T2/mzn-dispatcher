@@ -39,7 +39,10 @@ def run(request: ComputationRequest) -> ComputationStatus:
 
     solvers: List[Solver] = []
     for image in request.solver_images:
-        job = dispatcher.start_job(image, labels={"computation_id": computation_id})
+        job = dispatcher.start_job(image,
+                                   model_url=request.model_url,
+                                   data_url=request.data_url,
+                                   labels={"computation_id": computation_id})
 
         solvers.append(job.get_solver_representation())
 

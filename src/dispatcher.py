@@ -14,23 +14,46 @@ class Dispatcher:
         self.batch_api = batch_api
         self.job_prefix = environ["JOB_PREFIX"]
 
-    def start_job(self, image: str, labels: Dict[str, str] = {}) -> Job:
+    def start_job(self, image: str, model_url: str, data_url: str, labels: Dict[str, str] = {}) -> Job:
         labels["app"] = self.job_prefix
         name = self.job_prefix + "-" + str(uuid4())
-        command = ["minizinc", "test.mzn", "2.dzn"]
-        # Configureate Pod template container
+
+        # Configure Pod template
+        volume = client.V1Volume(
+                name="src-dir",
+                empty_dir=client.V1EmptyDirVolumeSource()
+                )
+
+        command = ["minizinc", "/src/model.mzn", "/src/data.dzn"]
         container = client.V1Container(
-            name=name,
-            image=image,
-            command=command)
+                name=name,
+                image=image,
+                command=command,
+                volume_mounts=[client.V1VolumeMount(name="src-dir",
+                                                    mount_path="/src")])
+
+        wget = "wget -O /src/model.mzn {model_url} && wget -O /src/data.dzn {data_url}".format(model_url=model_url,
+                                                                                               data_url=data_url)
+        initContainer = client.V1Container(
+                name="init-"+name,
+                image="busybox",
+                command=["sh", "-c", wget],
+                volume_mounts=[client.V1VolumeMount(name="src-dir",
+                                                    mount_path="/src")])
+
         # Create and configurate a spec section
         template = client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(labels={"app": name}),
-            spec=client.V1PodSpec(restart_policy="Never", containers=[container]))
+            spec=client.V1PodSpec(restart_policy="Never",
+                                  containers=[container],
+                                  init_containers=[initContainer],
+                                  volumes=[volume]))
+
         # Create the specification of deployment
         spec = client.V1JobSpec(
             template=template,
             backoff_limit=4)
+
         # Instantiate the job object
         job = client.V1Job(
             api_version="batch/v1",
