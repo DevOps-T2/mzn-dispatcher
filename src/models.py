@@ -15,6 +15,8 @@ class Solver(BaseModel):
 
 
 class ComputationRequest(BaseModel):
+    model_url: str
+    data_url: str
     solver_images: List[str]
 
 
