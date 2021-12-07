@@ -38,9 +38,11 @@ def run(request: ComputationRequest) -> ComputationStatus:
     computation_id = str(uuid4())
 
     solvers: List[Solver] = []
-    for image in request.solver_images:
-        job = dispatcher.start_job(image,
+    for solver in request.solvers:
+        job = dispatcher.start_job(solver.image,
                                    model_url=request.model_url,
+                                   cpu_request=solver.cpu_request,
+                                   mem_request=solver.mem_request,
                                    data_url=request.data_url,
                                    labels={"computation_id": computation_id})
 

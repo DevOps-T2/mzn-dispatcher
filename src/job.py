@@ -29,6 +29,14 @@ class Job(object):
         return self._job.spec.template.spec.containers[0].image
 
     @property
+    def cpu_request(self) -> str:
+        return self._job.spec.template.spec.containers[0].resources.requests["cpu"]
+
+    @property
+    def mem_request(self) -> str:
+        return self._job.spec.template.spec.containers[0].resources.requests["memory"]
+
+    @property
     def active(self) -> int:
         return self._job.status.to_dict().get('active', 0) or 0
 
@@ -44,7 +52,10 @@ class Job(object):
         solver_status = SolverStatus(active=self.active,
                                      succeeded=self.succeeded,
                                      failed=self.failed)
-        return Solver(image=self.image, status=solver_status)
+        return Solver(image=self.image,
+                      cpu_request=self.cpu_request,
+                      mem_request=self.mem_request,
+                      status=solver_status)
 
     def update_status(self) -> None:
         api_response = self._batch_api.read_namespaced_job_status(

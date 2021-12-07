@@ -11,13 +11,15 @@ class SolverStatus(BaseModel):
 
 class Solver(BaseModel):
     image: str
-    status: SolverStatus
+    cpu_request: str
+    mem_request: str
+    status: Optional[SolverStatus]
 
 
 class ComputationRequest(BaseModel):
     model_url: str
     data_url: str
-    solver_images: List[str]
+    solvers: List[Solver]
 
 
 class ComputationStatus(BaseModel):

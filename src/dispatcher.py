@@ -14,30 +14,37 @@ class Dispatcher:
         self.batch_api = batch_api
         self.job_prefix = environ["JOB_PREFIX"]
 
-    def start_job(self, image: str, model_url: str, data_url: str, labels: Dict[str, str] = {}) -> Job:
+    def start_job(self, image: str, cpu_request: int,
+                  mem_request: int, model_url: str, data_url: str, labels: Dict[str, str] = {}) -> Job:
         labels["app"] = self.job_prefix
         name = self.job_prefix + "-" + str(uuid4())
 
-        # Configure Pod template
+        # Configure shared volume for input files
         volume = client.V1Volume(
                 name="src-dir",
                 empty_dir=client.V1EmptyDirVolumeSource()
                 )
 
+        # Configure solver container
+        resources = client.V1ResourceRequirements(limits={"cpu": cpu_request, "memory": mem_request},
+                                                  requests={"cpu": cpu_request, "memory": mem_request})
         command = ["minizinc", "/src/model.mzn", "/src/data.dzn"]
         container = client.V1Container(
                 name=name,
                 image=image,
                 command=command,
+                resources=resources,
                 volume_mounts=[client.V1VolumeMount(name="src-dir",
                                                     mount_path="/src")])
 
-        wget = "wget -O /src/model.mzn {model_url} && wget -O /src/data.dzn {data_url}".format(model_url=model_url,
-                                                                                               data_url=data_url)
+        # Configure initContainer
+        env = [client.V1EnvVar(name="MODEL_URL", value=model_url), client.V1EnvVar(name="DATA_URL", value=data_url)]
+        wget = 'wget -O /src/model.mzn "$MODEL_URL" && wget -O /src/data.dzn "$DATA_URL"'
         initContainer = client.V1Container(
                 name="init-"+name,
                 image="busybox",
                 command=["sh", "-c", wget],
+                env=env,
                 volume_mounts=[client.V1VolumeMount(name="src-dir",
                                                     mount_path="/src")])
 
