@@ -29,12 +29,14 @@ class Job(object):
         return self._job.spec.template.spec.containers[0].image
 
     @property
-    def cpu_request(self) -> str:
-        return self._job.spec.template.spec.containers[0].resources.requests["cpu"]
+    def cpu_request(self) -> int:
+        cpu_request_str = self._job.spec.template.spec.containers[0].resources.requests["cpu"]
+        return int(cpu_request_str)
 
     @property
-    def mem_request(self) -> str:
-        return self._job.spec.template.spec.containers[0].resources.requests["memory"]
+    def mem_request(self) -> int:
+        mem_request_str = self._job.spec.template.spec.containers[0].resources.requests["memory"]
+        return int(mem_request_str[:-2]) # Truncate the "Mi" postfix
 
     @property
     def active(self) -> int:

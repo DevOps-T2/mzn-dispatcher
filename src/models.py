@@ -11,8 +11,8 @@ class SolverStatus(BaseModel):
 
 class Solver(BaseModel):
     image: str
-    cpu_request: str
-    mem_request: str
+    cpu_request: int
+    mem_request: int
     status: Optional[SolverStatus]
 
 

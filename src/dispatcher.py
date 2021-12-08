@@ -20,6 +20,9 @@ class Dispatcher:
         labels["app"] = self.job_prefix
         name = self.job_prefix + "-" + str(uuid4())
 
+        cpu_request_str = str(cpu_request)
+        mem_request_str = str(mem_request)+"Mi"
+
         # Configure shared volume for input files
         volume = client.V1Volume(
                 name="src-dir",
@@ -27,9 +30,9 @@ class Dispatcher:
                 )
 
         # Configure solver container
-        resources = client.V1ResourceRequirements(limits={"cpu": cpu_request, "memory": mem_request},
-                                                  requests={"cpu": cpu_request, "memory": mem_request})
-        command = ["minizinc", "/src/model.mzn", "/src/data.dzn"]
+        resources = client.V1ResourceRequirements(limits={"cpu": cpu_request_str, "memory": mem_request_str},
+                                                  requests={"cpu": cpu_request_str, "memory": mem_request_str})
+        command = ["minizinc", "-p", cpu_request_str, "/src/model.mzn", "/src/data.dzn"]
         solver = client.V1Container(
                 name=name,
                 image=image,
