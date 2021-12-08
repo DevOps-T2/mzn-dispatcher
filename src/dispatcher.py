@@ -5,6 +5,7 @@ from typing import Dict, List
 from kubernetes import client
 
 from .job import Job
+from .config import version
 
 
 class Dispatcher:
@@ -29,13 +30,19 @@ class Dispatcher:
         resources = client.V1ResourceRequirements(limits={"cpu": cpu_request, "memory": mem_request},
                                                   requests={"cpu": cpu_request, "memory": mem_request})
         command = ["minizinc", "/src/model.mzn", "/src/data.dzn"]
-        container = client.V1Container(
+        solver = client.V1Container(
                 name=name,
                 image=image,
                 command=command,
                 resources=resources,
                 volume_mounts=[client.V1VolumeMount(name="src-dir",
                                                     mount_path="/src")])
+
+        # Configure sidecar container to watch the solver
+        sidecar = client.V1Container(
+                name="sidecar-"+name,
+                image="mzn-job-sidecar:"+version,
+                image_pull_policy="IfNotPresent")
 
         # Configure initContainer
         env = [client.V1EnvVar(name="MODEL_URL", value=model_url), client.V1EnvVar(name="DATA_URL", value=data_url)]
@@ -52,7 +59,7 @@ class Dispatcher:
         template = client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(labels={"app": name}),
             spec=client.V1PodSpec(restart_policy="Never",
-                                  containers=[container],
+                                  containers=[solver, sidecar],
                                   init_containers=[initContainer],
                                   volumes=[volume]))
 

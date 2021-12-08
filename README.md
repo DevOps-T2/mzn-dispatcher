@@ -24,7 +24,10 @@ eval $(minikube docker-env)
 Then:
 
 ```bash
-docker build -t mzn-dispatcher .
+docker build -t mzn-dispatcher:$VERSION .
+docker build -t mzn-job-sidecar:$VERSION sidecar
 kubectl apply -f mzn-dispatcher.yaml
 kubectl port-forward service/mzn-dispatcher-service 8080:8080
 ```
+
+Make sure that `$VERSION` matches the version in `src/config.py`.
