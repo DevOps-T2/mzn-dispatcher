@@ -1,0 +1,3 @@
+resources:
+    - ./mzn-dispatcher.yaml
+    - ./rbac.yaml

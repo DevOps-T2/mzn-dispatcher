@@ -16,6 +16,4 @@ build:
     docker:
       dockerfile: Dockerfile
 deploy:
-  kubectl:
-    manifests:
-    - mzn-dispatcher.yaml
+  kustomize: {}
