@@ -19,7 +19,6 @@ metadata:
     app: mzn-dispatcher
   name: mzn-dispatcher
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: mzn-dispatcher
