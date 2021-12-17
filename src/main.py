@@ -3,7 +3,7 @@ import logging
 from uuid import uuid4
 
 from fastapi import FastAPI
-from kubernetes import client, config
+from kubernetes_asyncio import client, config
 
 from .dispatcher import Dispatcher
 from .job import Job
@@ -28,23 +28,23 @@ def init() -> None:
 
 
 @app.get("/")
-def read_root() -> Dict[str, Any]:
-    jobs = dispatcher.get_jobs()
+async def read_root() -> Dict[str, Any]:
+    jobs = await dispatcher.get_jobs()
     return {"jobs": [job.name for job in jobs]}
 
 
 @app.post("/run", response_model=ComputationStatus)
-def run(request: ComputationRequest) -> ComputationStatus:
+async def run(request: ComputationRequest) -> ComputationStatus:
     computation_id = str(uuid4())
 
     solvers: List[Solver] = []
     for solver in request.solvers:
-        job = dispatcher.start_job(solver.image,
-                                   model_url=request.model_url,
-                                   cpu_request=solver.cpu_request,
-                                   mem_request=solver.mem_request,
-                                   data_url=request.data_url,
-                                   labels={"computation_id": computation_id})
+        job = await dispatcher.start_job(solver.image,
+                                         model_url=request.model_url,
+                                         cpu_request=solver.cpu_request,
+                                         mem_request=solver.mem_request,
+                                         data_url=request.data_url,
+                                         labels={"computation_id": computation_id})
 
         solvers.append(job.get_solver_representation())
 
@@ -52,15 +52,15 @@ def run(request: ComputationRequest) -> ComputationStatus:
 
 
 @app.get("/status/{computation_id}", response_model=ComputationStatus)
-def get_status(computation_id: str) -> ComputationStatus:
-    jobs = dispatcher.get_jobs(labels={"computation_id": computation_id})
+async def get_status(computation_id: str) -> ComputationStatus:
+    jobs = await dispatcher.get_jobs(labels={"computation_id": computation_id})
     solvers = [j.get_solver_representation() for j in jobs]
     return ComputationStatus(computation_id=computation_id, solvers=solvers)
 
 
 @app.get("/result/{computation_id}", response_model=ComputationResult)
-def harvest_result(computation_id: str) -> ComputationResult:
-    jobs = dispatcher.get_jobs(labels={"computation_id": computation_id})
+async def harvest_result(computation_id: str) -> ComputationResult:
+    jobs = await dispatcher.get_jobs(labels={"computation_id": computation_id})
     succeeded = [job for job in jobs if job.succeeded]
 
     if not succeeded:
@@ -69,16 +69,16 @@ def harvest_result(computation_id: str) -> ComputationResult:
         result = ComputationResult(output=succeeded[0].get_output())
 
     for job in jobs:
-        job.delete()
+        await job.delete()
 
     return result
 
 
 @app.get("/delete/{name}")
-def delete_job(name: str) -> Dict[str, Any]:
+async def delete_job(name: str) -> Dict[str, Any]:
     jobs = Job.get_jobs()
     for job in jobs:
         if job.name == name:
-            return {"status": job.delete_job()}
+            return {"status": await job.delete_job()}
 
     return {"not": "found"}

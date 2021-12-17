@@ -2,7 +2,7 @@ from __future__ import annotations  # https://stackoverflow.com/questions/411350
 
 import logging
 
-from kubernetes import client
+from kubernetes_asyncio import client
 
 from .models import Solver, SolverStatus
 
@@ -59,8 +59,8 @@ class Job(object):
                       mem_request=self.mem_request,
                       status=solver_status)
 
-    def update_status(self) -> None:
-        api_response = self._batch_api.read_namespaced_job_status(
+    async def update_status(self) -> None:
+        api_response = await self._batch_api.read_namespaced_job_status(
             name=self.name,
             namespace="default")
 
@@ -71,8 +71,8 @@ class Job(object):
     def get_output(self) -> str:
         return "placeholder"
 
-    def delete(self) -> str:
-        api_response = self._batch_api.delete_namespaced_job(
+    async def delete(self) -> str:
+        api_response = await self._batch_api.delete_namespaced_job(
             name=self.name,
             namespace="default",
             body=client.V1DeleteOptions(

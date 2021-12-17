@@ -2,7 +2,7 @@ from os import environ
 from uuid import uuid4
 from typing import Dict, List
 
-from kubernetes import client
+from kubernetes_asyncio import client
 
 from .job import Job
 from .config import version
@@ -15,8 +15,8 @@ class Dispatcher:
         self.batch_api = batch_api
         self.job_prefix = environ["JOB_PREFIX"]
 
-    def start_job(self, image: str, cpu_request: int,
-                  mem_request: int, model_url: str, data_url: str, labels: Dict[str, str] = {}) -> Job:
+    async def start_job(self, image: str, cpu_request: int,
+                        mem_request: int, model_url: str, data_url: str, labels: Dict[str, str] = {}) -> Job:
         labels["app"] = self.job_prefix
         name = self.job_prefix + "-" + str(uuid4())
 
@@ -78,16 +78,16 @@ class Dispatcher:
             metadata=client.V1ObjectMeta(name=name, labels=labels),
             spec=spec)
 
-        started_job = self.batch_api.create_namespaced_job(
+        started_job = await self.batch_api.create_namespaced_job(
             body=job,
             namespace="default")
         return Job(started_job, self.batch_api)
 
-    def get_jobs(self, labels: Dict[str, str] = {}) -> List[Job]:
+    async def get_jobs(self, labels: Dict[str, str] = {}) -> List[Job]:
         labels["app"] = self.job_prefix
         label_selector = Dispatcher._labels_to_string(labels)
 
-        v1jobs = self.batch_api.list_namespaced_job(namespace="default", label_selector=label_selector)
+        v1jobs = await self.batch_api.list_namespaced_job(namespace="default", label_selector=label_selector)
         return [Job(j, self.batch_api) for j in v1jobs.items]
 
     @staticmethod
