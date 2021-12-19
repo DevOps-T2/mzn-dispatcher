@@ -34,3 +34,5 @@ spec:
         env:
         - name: JOB_PREFIX
           value: mzn-job
+        - name: SCHEDULER_NAME
+          value: scheduler-service

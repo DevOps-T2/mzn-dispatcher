@@ -8,7 +8,7 @@ rules:
   verbs: ["watch", "list"]
 - apiGroups: ["batch"]
   resources: ["*"]
-  verbs: ["create", "get", "list", "delete"]
+  verbs: ["create", "get", "list", "delete", "watch"]
 
 ---
 kind: ClusterRoleBinding

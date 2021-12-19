@@ -29,3 +29,8 @@ class ComputationStatus(BaseModel):
 
 class ComputationResult(BaseModel):
     output: Optional[str]
+
+
+class FinishComputationMessage(BaseModel):
+    user_id: str
+    computation_id: str

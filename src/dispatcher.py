@@ -1,4 +1,4 @@
-from os import environ
+import os
 from uuid import uuid4
 from typing import Dict, List
 
@@ -13,7 +13,7 @@ class Dispatcher:
 
     def __init__(self, batch_api: client.BatchV1Api):
         self.batch_api = batch_api
-        self.job_prefix = environ["JOB_PREFIX"]
+        self.job_prefix = os.environ["JOB_PREFIX"]
 
     async def start_job(self, image: str, cpu_request: int,
                         mem_request: int, model_url: str, data_url: str, labels: Dict[str, str] = {}) -> Job:

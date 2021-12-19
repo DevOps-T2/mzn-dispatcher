@@ -1,11 +1,14 @@
+from uuid import uuid4
 from typing import List, Dict, Any
 import logging
-from uuid import uuid4
+import asyncio
 
 from fastapi import FastAPI
 from kubernetes_asyncio import client, config
+import aiohttp
 
 from .dispatcher import Dispatcher
+from .watcher import Watcher
 from .job import Job
 from .models import ComputationRequest, ComputationStatus, ComputationResult, Solver, SolverStatus
 
@@ -15,16 +18,29 @@ logging.basicConfig(level=logging.INFO)
 app = FastAPI()
 
 dispatcher: Dispatcher
+watcher: Watcher
 
 
 @app.on_event("startup")
-def init() -> None:
+async def init() -> None:
     global dispatcher
+    global watcher
 
     logging.info("Initializing k8-API...")
     config.load_incluster_config()
 
-    dispatcher = Dispatcher(client.BatchV1Api())
+    batch_api = client.BatchV1Api()
+    dispatcher = Dispatcher(batch_api)
+
+    scheduler_session = aiohttp.ClientSession()
+    watcher = Watcher(batch_api, dispatcher, scheduler_session)
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    global watcher
+
+    await watcher.shutdown()
 
 
 @app.get("/")
@@ -48,6 +64,7 @@ async def run(request: ComputationRequest) -> ComputationStatus:
 
         solvers.append(job.get_solver_representation())
 
+    asyncio.create_task(watcher.watch_jobs(computation_id))
     return ComputationStatus(computation_id=computation_id, solvers=solvers)
 
 
