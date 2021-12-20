@@ -85,7 +85,7 @@ class Watcher:
             except aiohttp.client_exceptions.ClientConnectorError:
                 logging.error('Failed to contact scheduler with domain name "{}" '.format(self.scheduler_name))
 
-            asyncio.sleep(5)
+            await asyncio.sleep(5)
 
         else:
             logging.error('Can not notify "{}". Cleaning up resources anyways.'.format(self.scheduler_name))
