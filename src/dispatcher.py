@@ -48,8 +48,13 @@ class Dispatcher:
                 image_pull_policy="IfNotPresent")
 
         # Configure initContainer
-        env = [client.V1EnvVar(name="MODEL_URL", value=model_url), client.V1EnvVar(name="DATA_URL", value=data_url)]
-        wget = 'wget -O /src/model.mzn "$MODEL_URL" && wget -O /src/data.dzn "$DATA_URL"'
+        env = [client.V1EnvVar(name="MODEL_URL", value=model_url)]
+        if data_url:
+            env.append(client.V1EnvVar(name="DATA_URL", value=data_url))
+
+        # If the second wget fails, because DATA_URL isn't defined, we create an empty /src/data.dzn
+        # TODO probably not ideal
+        wget = 'wget -O /src/model.mzn "$MODEL_URL" && ( wget -O /src/data.dzn "$DATA_URL" || touch /src/data.dzn )'
         initContainer = client.V1Container(
                 name="init-"+name,
                 image="busybox",

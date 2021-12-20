@@ -20,7 +20,7 @@ class ComputationRequest(BaseModel):
     user_id: str
     timeout_seconds: int
     model_url: str
-    data_url: str
+    data_url: Optional[str]
     solvers: List[Solver]
 
 
