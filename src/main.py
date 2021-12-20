@@ -52,6 +52,7 @@ async def read_root() -> Dict[str, Any]:
 @app.post("/run", response_model=ComputationStatus)
 async def run(request: ComputationRequest) -> ComputationStatus:
     computation_id = str(uuid4())
+    user_id = request.user_id
 
     solvers: List[Solver] = []
     for solver in request.solvers:
@@ -60,11 +61,11 @@ async def run(request: ComputationRequest) -> ComputationStatus:
                                          cpu_request=solver.cpu_request,
                                          mem_request=solver.mem_request,
                                          data_url=request.data_url,
-                                         labels={"computation_id": computation_id})
+                                         labels={"computation_id": computation_id, "user_id": user_id})
 
         solvers.append(job.get_solver_representation())
 
-    asyncio.create_task(watcher.watch_jobs(computation_id))
+    asyncio.create_task(watcher.watch_jobs(computation_id, user_id))
     return ComputationStatus(computation_id=computation_id, solvers=solvers)
 
 

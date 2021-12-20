@@ -17,6 +17,7 @@ class Solver(BaseModel):
 
 
 class ComputationRequest(BaseModel):
+    user_id: str
     model_url: str
     data_url: str
     solvers: List[Solver]

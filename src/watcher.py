@@ -26,7 +26,7 @@ class Watcher:
         self.scheduler_name = os.environ["SCHEDULER_NAME"]
         self.hostname = os.environ["HOSTNAME"]
 
-    async def watch_jobs(self, computation_id: str):  # TODO variable namespace
+    async def watch_jobs(self, computation_id: str, user_id: str):  # TODO variable namespace
         namespace = "default"
         label_selector = self._labels_to_string({"app": self.job_prefix, "computation_id": computation_id})
         response = await self.batch_api.list_namespaced_job(namespace="default", label_selector=label_selector)
@@ -37,7 +37,7 @@ class Watcher:
         for job in response.items:
             successful, failed = self.update_counts(job, successful, failed)
             if successful > 0 or failed >= num_jobs:
-                await self.handle_termination(computation_id)
+                await self.handle_termination(computation_id, user_id)
                 return
 
         w = watch.Watch()
@@ -49,7 +49,7 @@ class Watcher:
 
             successful, failed = self.update_counts(job, successful, failed)
             if successful > 0 or failed >= num_jobs:
-                await self.handle_termination(computation_id)
+                await self.handle_termination(computation_id, user_id)
                 return
 
     def update_counts(self, job, successful, failed):
@@ -60,17 +60,17 @@ class Watcher:
 
         return (successful, failed)
 
-    async def handle_termination(self, computation_id: str):
+    async def handle_termination(self, computation_id: str, user_id: str):
 
-        await self.notify_scheduler(computation_id)
+        await self.notify_scheduler(computation_id, user_id)
 
         jobs = await self.dispatcher.get_jobs(labels={"computation_id": computation_id})
         for job in jobs:
             await job.delete()
 
-    async def notify_scheduler(self, computation_id: str):  # TODO figure out what to do about user_id
+    async def notify_scheduler(self, computation_id: str, user_id: str):
         url = "http://{name}/scheduler/finish_computation".format(name=self.scheduler_name)
-        data = FinishComputationMessage(computation_id=computation_id, user_id="placeholder").json().encode("utf8")
+        data = FinishComputationMessage(computation_id=computation_id, user_id=user_id).json().encode("utf8")
 
         for _ in range(5):
             try:
