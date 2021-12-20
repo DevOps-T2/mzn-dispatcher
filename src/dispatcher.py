@@ -5,7 +5,6 @@ from typing import Dict, List
 from kubernetes_asyncio import client
 
 from .job import Job
-from .config import version
 
 
 class Dispatcher:
@@ -14,6 +13,7 @@ class Dispatcher:
     def __init__(self, batch_api: client.BatchV1Api):
         self.batch_api = batch_api
         self.job_prefix = os.environ["JOB_PREFIX"]
+        self.sidecar_image = os.environ["SIDECAR_IMAGE_NAME"]
 
     async def start_job(self, image: str, cpu_request: int,
                         mem_request: int, model_url: str, data_url: str, labels: Dict[str, str] = {}) -> Job:
@@ -44,7 +44,7 @@ class Dispatcher:
         # Configure sidecar container to watch the solver
         sidecar = client.V1Container(
                 name="sidecar-"+name,
-                image="mzn-job-sidecar:"+version,
+                image=self.sidecar_image,
                 image_pull_policy="IfNotPresent")
 
         # Configure initContainer
