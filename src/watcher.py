@@ -80,7 +80,8 @@ class Watcher:
                     if status == 200:
                         break
                     else:
-                        logging.error('Scheduler Service replied with error code: {}'.format(status))
+                        logging.error('Scheduler Service replied with error code: {}'.format(status) +
+                                      ' and message {}'.format(await response.text()))
 
             except aiohttp.client_exceptions.ClientConnectorError:
                 logging.error('Failed to contact scheduler with domain name "{}" '.format(self.scheduler_name))
