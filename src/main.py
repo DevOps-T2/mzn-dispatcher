@@ -58,9 +58,10 @@ async def run(request: ComputationRequest) -> ComputationStatus:
     for solver in request.solvers:
         job = await dispatcher.start_job(solver.image,
                                          model_url=request.model_url,
+                                         data_url=request.data_url,
                                          cpu_request=solver.cpu_request,
                                          mem_request=solver.mem_request,
-                                         data_url=request.data_url,
+                                         timeout_seconds=request.timeout_seconds,
                                          labels={"computation_id": computation_id, "user_id": user_id})
 
         solvers.append(job.get_solver_representation())

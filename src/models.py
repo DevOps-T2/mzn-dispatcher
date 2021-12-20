@@ -18,6 +18,7 @@ class Solver(BaseModel):
 
 class ComputationRequest(BaseModel):
     user_id: str
+    timeout_seconds: int
     model_url: str
     data_url: str
     solvers: List[Solver]

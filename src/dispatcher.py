@@ -15,8 +15,8 @@ class Dispatcher:
         self.job_prefix = os.environ["JOB_PREFIX"]
         self.sidecar_image = os.environ["SIDECAR_IMAGE_NAME"]
 
-    async def start_job(self, image: str, cpu_request: int,
-                        mem_request: int, model_url: str, data_url: str, labels: Dict[str, str] = {}) -> Job:
+    async def start_job(self, image: str, model_url: str, data_url: str, cpu_request: int,
+                        mem_request: int, timeout_seconds: int, labels: Dict[str, str] = {}) -> Job:
         labels["app"] = self.job_prefix
         name = self.job_prefix + "-" + str(uuid4())
 
@@ -69,6 +69,7 @@ class Dispatcher:
         # Create the specification of deployment
         spec = client.V1JobSpec(
             template=template,
+            active_deadline_seconds=timeout_seconds,
             backoff_limit=4)
 
         # Instantiate the job object
