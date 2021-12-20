@@ -32,7 +32,7 @@ class Dispatcher:
         # Configure solver container
         resources = client.V1ResourceRequirements(limits={"cpu": cpu_request_str, "memory": mem_request_str},
                                                   requests={"cpu": cpu_request_str, "memory": mem_request_str})
-        command = ["minizinc", "-p", cpu_request_str, "/src/model.mzn", "/src/data.dzn"]
+        command = ["minizinc", "-p", cpu_request_str, "-o", "/src/solution.txt", "/src/model.mzn", "/src/data.dzn"]
         solver = client.V1Container(
                 name=name,
                 image=image,
@@ -45,7 +45,11 @@ class Dispatcher:
         sidecar = client.V1Container(
                 name="sidecar-"+name,
                 image=self.sidecar_image,
-                image_pull_policy="IfNotPresent")
+                image_pull_policy="IfNotPresent",
+                env=[client.V1EnvVar(name="COMPUTATION_ID", value=labels["computation_id"]),
+                     client.V1EnvVar(name="USER_ID", value=labels["user_id"])],
+                volume_mounts=[client.V1VolumeMount(name="src-dir",
+                                                    mount_path="/src")])
 
         # Configure initContainer
         env = [client.V1EnvVar(name="MODEL_URL", value=model_url)]
