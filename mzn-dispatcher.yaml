@@ -35,6 +35,11 @@ spec:
         - name: JOB_PREFIX
           value: mzn-job
         - name: SIDECAR_IMAGE_NAME
-          value: "mzn-job-sidecar:0.5"
+          valueFrom:
+              configMapKeyRef:
+                  name: dispatcher-config
+                  key: SIDECAR_IMAGE_NAME.txt
         - name: SCHEDULER_NAME
           value: scheduler-app
+        - name: test
+          value: $(TEST)
