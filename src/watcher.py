@@ -71,10 +71,11 @@ class Watcher:
     async def notify_scheduler(self, computation_id: str, user_id: str):
         url = "http://{name}/api/scheduler/finish_computation".format(name=self.scheduler_name)
         data = FinishComputationMessage(computation_id=computation_id, user_id=user_id).dict()
+        headers = {'UserId': 'system', 'Role': 'admin'}
 
         for _ in range(5):
             try:
-                async with self.scheduler_session.post(url, json=data) as response:
+                async with self.scheduler_session.post(url, json=data, headers=headers) as response:
                     status = response.status
 
                     if status == 200:
