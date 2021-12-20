@@ -69,7 +69,7 @@ class Watcher:
             await job.delete()
 
     async def notify_scheduler(self, computation_id: str, user_id: str):
-        url = "http://{name}/scheduler/finish_computation".format(name=self.scheduler_name)
+        url = "http://{name}/api/scheduler/finish_computation".format(name=self.scheduler_name)
         data = FinishComputationMessage(computation_id=computation_id, user_id=user_id).json().encode("utf8")
 
         for _ in range(5):
