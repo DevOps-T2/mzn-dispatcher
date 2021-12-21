@@ -30,7 +30,7 @@ def save_solution():
             data = SolutionRequest(user_id=user_id, computation_id=computation_id, body=fd.read()).dict()
 
         headers = {'UserId': 'system', 'Role': 'admin'}
-        response = requests.post('http://'+solution_service+'/api/solutions/'+computation_id, json=data, headers=headers)
+        response = requests.post('http://'+solution_service+'/api/solutions/', json=data, headers=headers)
         if response.status_code != 200:
             logging.error("solution-service replied {}".format(response.text) +
                           "On request {}".format(data))
