@@ -9,7 +9,7 @@ from kubernetes import client, config, watch
 namespace = "default"
 solution_file = "/src/solution.txt"
 
-solution_service = "solution-serice"
+solution_service = "solution-service"
 
 computation_id = os.environ["COMPUTATION_ID"]
 user_id = os.environ["USER_ID"]
