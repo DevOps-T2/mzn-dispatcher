@@ -76,6 +76,6 @@ class Job(object):
             name=self.name,
             namespace="default",
             body=client.V1DeleteOptions(
-                propagation_policy='Foreground',
-                grace_period_seconds=5))
-        return api_response.status
+                propagation_policy='Background')
+            )
+        return api_response.status + " " + (api_response.reason or "")

@@ -77,27 +77,12 @@ async def get_status(computation_id: str) -> ComputationStatus:
     return ComputationStatus(computation_id=computation_id, solvers=solvers)
 
 
-@app.get("/result/{computation_id}", response_model=ComputationResult)
+@app.post("/delete/{computation_id}")
 async def harvest_result(computation_id: str) -> ComputationResult:
     jobs = await dispatcher.get_jobs(labels={"computation_id": computation_id})
-    succeeded = [job for job in jobs if job.succeeded]
-
-    if not succeeded:
-        result = ComputationResult()
-    else:
-        result = ComputationResult(output=succeeded[0].get_output())
 
     for job in jobs:
-        await job.delete()
+        status = await job.delete()
+        logging.info("Deleting job " + status)
 
-    return result
-
-
-@app.get("/delete/{name}")
-async def delete_job(name: str) -> Dict[str, Any]:
-    jobs = Job.get_jobs()
-    for job in jobs:
-        if job.name == name:
-            return {"status": await job.delete_job()}
-
-    return {"not": "found"}
+    return "Success"

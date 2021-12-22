@@ -32,6 +32,7 @@ class Watcher:
         response = await self.batch_api.list_namespaced_job(namespace="default", label_selector=label_selector)
 
         num_jobs = len(response.items)
+
         successful = 0
         failed = 0
         for job in response.items:
@@ -48,7 +49,7 @@ class Watcher:
             job = event["object"]
 
             successful, failed = self.update_counts(job, successful, failed)
-            if successful > 0 or failed >= num_jobs:
+            if successful > 0 or failed >= num_jobs or event["type"] == "DELETED":
                 await self.handle_termination(computation_id, user_id)
                 return
 
