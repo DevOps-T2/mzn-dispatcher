@@ -1,7 +1,4 @@
-FROM debian:latest
-
-RUN apt update && apt install -y python3-pip
-
+FROM python:3.9
 
 RUN useradd -m mzn-dispatcher
 USER mzn-dispatcher
