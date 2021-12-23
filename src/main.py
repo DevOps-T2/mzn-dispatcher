@@ -57,6 +57,7 @@ async def run(request: ComputationRequest) -> ComputationStatus:
     solvers: List[Solver] = []
     for solver in request.solvers:
         job = await dispatcher.start_job(solver.image,
+                                         option_string=request.options,
                                          model_url=request.model_url,
                                          data_url=request.data_url,
                                          cpu_request=solver.cpu_request,

@@ -1,4 +1,5 @@
 import os
+import shlex
 from uuid import uuid4
 from typing import Dict, List
 
@@ -15,7 +16,7 @@ class Dispatcher:
         self.job_prefix = os.environ["JOB_PREFIX"]
         self.sidecar_image = os.environ["SIDECAR_IMAGE_NAME"]
 
-    async def start_job(self, image: str, model_url: str, data_url: str, cpu_request: int,
+    async def start_job(self, image: str, option_string: str, model_url: str, data_url: str, cpu_request: int,
                         mem_request: int, timeout_seconds: int, labels: Dict[str, str] = {}) -> Job:
         labels["app"] = self.job_prefix
         name = self.job_prefix + "-" + str(uuid4())
@@ -32,11 +33,14 @@ class Dispatcher:
         # Configure solver container
         resources = client.V1ResourceRequirements(limits={"cpu": cpu_request_str, "memory": mem_request_str},
                                                   requests={"cpu": cpu_request_str, "memory": mem_request_str})
-        command = ["minizinc", "-p", cpu_request_str, "-o", "/src/solution.txt", "/src/model.mzn", "/src/data.dzn"]
+
+        options = list(map(shlex.quote, shlex.split(option_string)))  # Split and escape option string
+        options += ["-p", cpu_request_str, "/src/model.mzn", "/src/data.dzn"]
+        mzn_string = " ".join(["minizinc"] + options + [">", "/src/solution.txt", "2>", "/src/errors.txt"])
         solver = client.V1Container(
                 name=name,
                 image=image,
-                command=command,
+                command=["sh", "-c", mzn_string],
                 resources=resources,
                 volume_mounts=[client.V1VolumeMount(name="src-dir",
                                                     mount_path="/src")])

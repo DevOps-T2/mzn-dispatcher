@@ -22,6 +22,7 @@ class ComputationRequest(BaseModel):
     model_url: str
     data_url: Optional[str]
     solvers: List[Solver]
+    solver_options: Optional[str]
 
 
 class ComputationStatus(BaseModel):
